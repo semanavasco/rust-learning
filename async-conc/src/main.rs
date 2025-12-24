@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{pin::Pin, time::Duration};
 
 fn main() {
     println!("=== Example 1 ===");
@@ -165,6 +165,9 @@ fn example_six() {
             }
         };
 
-        trpl::join!(tx1_fut, tx_fut, rx_fut);
+        let futures: Vec<Pin<Box<dyn Future<Output = ()>>>> =
+            vec![Box::pin(tx1_fut), Box::pin(rx_fut), Box::pin(tx_fut)];
+
+        trpl::join_all(futures).await;
     });
 }
