@@ -16,6 +16,8 @@ fn main() {
     example_five();
     println!("=== Example 6 ===");
     example_six();
+    println!("=== Example 7 ===");
+    example_seven();
 }
 
 /// Spawns a task to run concurrently with the main task, awaiting its completion.
@@ -171,5 +173,16 @@ fn example_six() {
         let futures: Vec<Pin<&mut dyn Future<Output = ()>>> = vec![tx1_fut, rx_fut, tx_fut];
 
         trpl::join_all(futures).await;
+    });
+}
+
+fn example_seven() {
+    trpl::run(async {
+        let a = async { 1u32 };
+        let b = async { "Hello!" };
+        let c = async { true };
+
+        let (a_result, b_result, c_result) = trpl::join!(a, b, c);
+        println!("{a_result}, {b_result}, {c_result}");
     });
 }
