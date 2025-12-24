@@ -1,4 +1,7 @@
-use std::{pin::Pin, time::Duration};
+use std::{
+    pin::{Pin, pin},
+    time::Duration,
+};
 
 fn main() {
     println!("=== Example 1 ===");
@@ -131,7 +134,7 @@ fn example_six() {
         let (tx, mut rx) = trpl::channel();
 
         let tx1 = tx.clone();
-        let tx1_fut = async move {
+        let tx1_fut = pin!(async move {
             let vals = vec![
                 String::from("hi"),
                 String::from("from"),
@@ -143,15 +146,15 @@ fn example_six() {
                 tx1.send(val).unwrap();
                 trpl::sleep(Duration::from_millis(500)).await;
             }
-        };
+        });
 
-        let rx_fut = async {
+        let rx_fut = pin!(async {
             while let Some(value) = rx.recv().await {
                 println!("received '{value}'");
             }
-        };
+        });
 
-        let tx_fut = async move {
+        let tx_fut = pin!(async move {
             let vals = vec![
                 String::from("more"),
                 String::from("messages"),
@@ -163,10 +166,9 @@ fn example_six() {
                 tx.send(val).unwrap();
                 trpl::sleep(Duration::from_millis(1500)).await;
             }
-        };
+        });
 
-        let futures: Vec<Pin<Box<dyn Future<Output = ()>>>> =
-            vec![Box::pin(tx1_fut), Box::pin(rx_fut), Box::pin(tx_fut)];
+        let futures: Vec<Pin<&mut dyn Future<Output = ()>>> = vec![tx1_fut, rx_fut, tx_fut];
 
         trpl::join_all(futures).await;
     });
