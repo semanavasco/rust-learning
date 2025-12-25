@@ -1,7 +1,7 @@
 use std::{
     pin::{Pin, pin},
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 fn main() {
@@ -23,6 +23,8 @@ fn main() {
     example_eight();
     println!("=== Example 9 ===");
     example_nine();
+    println!("=== Example 10 ===");
+    example_ten();
 }
 
 /// Spawns a task to run concurrently with the main task, awaiting its completion.
@@ -245,5 +247,43 @@ fn example_nine() {
         };
 
         trpl::race(a, b).await;
+    });
+}
+
+/// Benchmark of yield_now and sleep(1ns)
+fn example_ten() {
+    trpl::run(async {
+        // Sleep
+        let one_ns = Duration::from_nanos(1);
+        let start = Instant::now();
+
+        async {
+            for _ in 1..1000 {
+                trpl::sleep(one_ns).await;
+            }
+        }
+        .await;
+
+        let time = Instant::now() - start;
+        println!(
+            "'sleep' version finished after {} seconds",
+            time.as_secs_f32()
+        );
+
+        // Yield now
+        let start = Instant::now();
+
+        async {
+            for _ in 1..1000 {
+                trpl::yield_now().await;
+            }
+        }
+        .await;
+
+        let time = Instant::now() - start;
+        println!(
+            "'yield_now' version finished after {} seconds",
+            time.as_secs_f32()
+        );
     });
 }
