@@ -220,26 +220,29 @@ fn example_nine() {
     }
 
     trpl::run(async {
+        let one_ms = Duration::from_millis(1);
+
         let a = async {
             println!("'a' started");
-            // Emulating slow tasks
             slow("a", 30);
+            trpl::sleep(one_ms).await;
             slow("a", 10);
+            trpl::sleep(one_ms).await;
             slow("a", 20);
-            // Here we hand control back to the runtime
-            trpl::sleep(Duration::from_millis(50)).await;
+            trpl::sleep(one_ms).await;
             println!("'a' finished");
         };
 
         let b = async {
             println!("'b' started");
-            // Emulating slow tasks
             slow("b", 75);
+            trpl::sleep(one_ms).await;
             slow("b", 10);
+            trpl::sleep(one_ms).await;
             slow("b", 15);
+            trpl::sleep(one_ms).await;
             slow("b", 350);
-            // Here we hand control back to the runtime
-            trpl::sleep(Duration::from_millis(50)).await;
+            trpl::sleep(one_ms).await;
             println!("'b' finished");
         };
 
