@@ -1,5 +1,6 @@
 use std::{
     pin::{Pin, pin},
+    thread,
     time::Duration,
 };
 
@@ -18,6 +19,10 @@ fn main() {
     example_six();
     println!("=== Example 7 ===");
     example_seven();
+    println!("=== Example 8 ===");
+    example_eight();
+    println!("=== Example 9 ===");
+    example_nine();
 }
 
 /// Spawns a task to run concurrently with the main task, awaiting its completion.
@@ -176,6 +181,7 @@ fn example_six() {
     });
 }
 
+/// Waiting for multiple futures and getting their results (with different types)
 fn example_seven() {
     trpl::run(async {
         let a = async { 1u32 };
@@ -184,5 +190,59 @@ fn example_seven() {
 
         let (a_result, b_result, c_result) = trpl::join!(a, b, c);
         println!("{a_result}, {b_result}, {c_result}");
+    });
+}
+
+/// Only waiting until one future finishes
+fn example_eight() {
+    trpl::run(async {
+        let slow = async {
+            println!("'slow' started");
+            trpl::sleep(Duration::from_millis(100)).await;
+            println!("'slow' finished");
+        };
+
+        let fast = async {
+            println!("'fast' started");
+            trpl::sleep(Duration::from_millis(50)).await;
+            println!("'fast' finished");
+        };
+
+        trpl::race(slow, fast).await;
+    });
+}
+
+/// Yielding control to the runtime
+fn example_nine() {
+    fn slow(name: &str, ms: u64) {
+        thread::sleep(Duration::from_millis(ms));
+        println!("'{name}' ran for {ms}ms");
+    }
+
+    trpl::run(async {
+        let a = async {
+            println!("'a' started");
+            // Emulating slow tasks
+            slow("a", 30);
+            slow("a", 10);
+            slow("a", 20);
+            // Here we hand control back to the runtime
+            trpl::sleep(Duration::from_millis(50)).await;
+            println!("'a' finished");
+        };
+
+        let b = async {
+            println!("'b' started");
+            // Emulating slow tasks
+            slow("b", 75);
+            slow("b", 10);
+            slow("b", 15);
+            slow("b", 350);
+            // Here we hand control back to the runtime
+            trpl::sleep(Duration::from_millis(50)).await;
+            println!("'b' finished");
+        };
+
+        trpl::race(a, b).await;
     });
 }
