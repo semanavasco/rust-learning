@@ -1,4 +1,4 @@
-use trpl::StreamExt;
+use trpl::{ReceiverStream, Stream, StreamExt};
 
 fn main() {
     trpl::run(async {
@@ -6,6 +6,8 @@ fn main() {
         example1().await;
         println!("=== Example 2 ===");
         example2().await;
+        println!("=== Example 3 ===");
+        example3().await;
     });
 }
 
@@ -30,5 +32,26 @@ async fn example2() {
 
     while let Some(value) = filtered.next().await {
         println!("The value was: {value}");
+    }
+}
+
+/// Helper function to create a stream containing the 10 first letters of the alphabet as messages
+fn get_messages() -> impl Stream<Item = String> {
+    let (tx, rx) = trpl::channel();
+
+    let messages = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+    for message in messages {
+        tx.send(format!("Message: {message}")).unwrap();
+    }
+
+    ReceiverStream::new(rx)
+}
+
+/// Example of using a ReceiverStream
+async fn example3() {
+    let mut messages = get_messages();
+
+    while let Some(message) = messages.next().await {
+        println!("{message}");
     }
 }
