@@ -1,3 +1,5 @@
+use std::{pin::pin, time::Duration};
+
 use trpl::{ReceiverStream, Stream, StreamExt};
 
 fn main() {
@@ -8,6 +10,8 @@ fn main() {
         example2().await;
         println!("=== Example 3 ===");
         example3().await;
+        println!("=== Example 4 ===");
+        example4().await;
     });
 }
 
@@ -53,5 +57,17 @@ async fn example3() {
 
     while let Some(message) = messages.next().await {
         println!("{message}");
+    }
+}
+
+/// Adding a time limit on the items in a stream
+async fn example4() {
+    let mut messages = pin!(get_messages().timeout(Duration::from_millis(200)));
+
+    while let Some(result) = messages.next().await {
+        match result {
+            Ok(message) => println!("{message}"),
+            Err(reason) => eprintln!("Problem: {reason}"),
+        }
     }
 }
