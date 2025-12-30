@@ -40,13 +40,20 @@ async fn example2() {
 }
 
 /// Helper function to create a stream containing the 10 first letters of the alphabet as messages
+/// Messages have a delay of 100 or 300 depending on whether they are even or not
 fn get_messages() -> impl Stream<Item = String> {
     let (tx, rx) = trpl::channel();
 
-    let messages = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
-    for message in messages {
-        tx.send(format!("Message: {message}")).unwrap();
-    }
+    trpl::spawn_task(async move {
+        let messages = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+
+        for (i, msg) in messages.into_iter().enumerate() {
+            let time_to_sleep = if i % 2 == 0 { 100 } else { 300 };
+            trpl::sleep(Duration::from_millis(time_to_sleep)).await;
+
+            tx.send(format!("Message: {msg}")).unwrap();
+        }
+    });
 
     ReceiverStream::new(rx)
 }
