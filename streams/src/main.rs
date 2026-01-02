@@ -12,6 +12,8 @@ fn main() {
         example3().await;
         println!("=== Example 4 ===");
         example4().await;
+        println!("=== Example 5 ===");
+        example5().await;
     });
 }
 
@@ -94,4 +96,23 @@ fn get_intervals() -> impl Stream<Item = u32> {
     });
 
     ReceiverStream::new(rx)
+}
+
+/// Merged messages and intervals.
+/// Showcases the use of merge, throttle and take.
+async fn example5() {
+    let messages = get_messages().timeout(Duration::from_millis(200));
+    let intervals = get_intervals()
+        .map(|c| format!("Interval: {c}"))
+        .throttle(Duration::from_millis(100))
+        .timeout(Duration::from_secs(10));
+    let merged = messages.merge(intervals).take(20);
+    let mut stream = pin!(merged);
+
+    while let Some(result) = stream.next().await {
+        match result {
+            Ok(message) => println!("{message}"),
+            Err(reason) => eprintln!("Problem: {reason}"),
+        }
+    }
 }
